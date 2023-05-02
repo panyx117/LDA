@@ -6,6 +6,7 @@ import gensim
 import matplotlib.pyplot as plt
 import matplotlib
 
+#原始文本处理过程，得到大于500的随机抽样段落
 def process(file_path):
     paragraphs = []
     label = []
@@ -34,13 +35,14 @@ def process(file_path):
 
     return para_sample,label_sample
 
+#对段落集合进行分词工作（同时完成）
 def dividword(paragraphs,labels):
     divid_word = []
     label_word = []
     divid_char = []
     label_char = []
     for i,para in enumerate(paragraphs):
-        words = [word for word in jieba.cut(para)]
+        words = [word for word in jieba.cut(para)]#调用jieba进行分词工作
         divid_word.append(words)
         label_word.append(labels[i])
 
@@ -54,16 +56,18 @@ if __name__ == "__main__":
     file_path = 'D:/语料库/'
     paragraphs, label = process(file_path)
     divid_word,label_word,divid_char,label_char = dividword(paragraphs,label)
+    #设置主题数范围
     topicnum_range = range(2,20)
+    #分别生成词典并统计各词出现次数
     dictionary_word = gensim.corpora.Dictionary(divid_word)
     corpus_word = [dictionary_word.doc2bow(word) for word in divid_word]
     dictionary_char = gensim.corpora.Dictionary(divid_char)
     corpus_char = [dictionary_char.doc2bow(char) for char in divid_char]
 
-    perplexity_word = []
-    coherence_word = []
-    perplexity_char = []
-    coherence_char = []
+    perplexity_word = []#各主题数下困惑性数值（以词为单位）
+    coherence_word = []#各主题数下主题一致性数值（以字为单位）
+    perplexity_char = []#各主题数下困惑性数值（以词为单位）
+    coherence_char = []#各主题数下主题一致性数值（以字为单位）
     for topicnum in topicnum_range:
         ldamodel_word = gensim.models.ldamodel.LdaModel(corpus=corpus_word,num_topics=topicnum,id2word=dictionary_word,passes=20)
         pep_wd = -ldamodel_word.log_perplexity(corpus_word)
@@ -77,7 +81,7 @@ if __name__ == "__main__":
         cv_ch = gensim.models.CoherenceModel(model=ldamodel_char, texts=divid_char, dictionary=dictionary_char,coherence='c_v')
         coherence_char.append(cv_ch.get_coherence())
 
-
+    #绘图部分
     plt.plot(topicnum_range, perplexity_word)
     plt.legend()
     plt.xlabel('主题数目')
